@@ -7,6 +7,7 @@ class productList(models.Model):
 	_name = 'product.list'
 	_inherit = ['mail.thread', 'mail.activity.mixin']
 
+	sequence = fields.Char('Referencia', required=True, index=True, copy=False, default='New')
 	project_id = fields.Many2one('project.project',string='Proyecto',
 		default=lambda self: self.env.context.get('default_project_id'),
 		track_visibility='onchange',readonly=True)
@@ -24,6 +25,12 @@ class productList(models.Model):
 	type = fields.Selection(selection=[('alta','Alta'),('normal','Normal'),('baja','Baja')],
 		track_visibility='onchange')
 	is_locked = fields.Boolean(default=True)
+
+	@api.model
+	def create(self, vals):
+		if vals.get('sequence', 'New') == 'New':
+			vals['sequence'] = self.env['ir.sequence'].next_by_code('product.list') or '/'
+		return super(productList, self).create(vals)
 
 	@api.multi
 	def set_done(self):
